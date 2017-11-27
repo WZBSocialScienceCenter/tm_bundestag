@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 
 import pandas as pd
@@ -30,7 +32,7 @@ for fname in sorted(os.listdir(RAW_DATA_PATH)):
     fpath = os.path.join(RAW_DATA_PATH, fname)
     if fname.endswith('.csv') and os.path.isfile(fpath):
         print('reading CSV file `%s`' % fpath)
-        sess_df = pd.read_csv(fpath, index_col='id', usecols=range(1, 15))
+        sess_df = pd.read_csv(fpath, index_col='id', usecols=range(1, 15), encoding='utf-8')
 
         # filter observations:
         # - only speeches
@@ -66,7 +68,8 @@ def only_value_from_series(ser):
     assert len(uniques) == 1
     return uniques[0]
 
-def typed_series(name, val, dtype):
+
+def typed_series(name, val, dtype=None):
     return pd.Series(data=[val] if type(val) not in (list, tuple) else val, name=name, dtype=dtype)
 
 
@@ -83,9 +86,9 @@ for seq, (gname, gspeech) in enumerate(parl_speeches_grouped):
 #        typed_series('speaker_fp', only_value_from_series(gspeech.speaker_fp), str),
         typed_series('speaker_key', gname[0], int),
 #        typed_series('speaker_party', only_value_from_series(gspeech.speaker_party), str),
-        typed_series('text', pars, str),
+        typed_series('text', pars),
         typed_series('top_id', gname[1], int),
-        typed_series('top', only_value_from_series(gspeech.top), str)
+        typed_series('top', only_value_from_series(gspeech.top))
     ]))
 
 
