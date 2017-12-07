@@ -79,7 +79,7 @@ uncommon_special_chars = set(sum([[c for c in cs] for cs in uncommon_special_cha
 
 print('detected the following uncommon special characters:')
 for c in uncommon_special_chars:
-    print('%04x -> %s' % (ord(c), c))
+    print('%04x' % ord(c))
 
 
 print('running preprocessing pipeline...')
