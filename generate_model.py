@@ -7,7 +7,7 @@ Best model parameters:
 - k = 80 topics
 - alpha = 50/k = 0.625
 - eta = 0.5
-- 2000 iterations
+- 1500 iterations
 """
 
 from __future__ import division
@@ -29,7 +29,7 @@ LDA_PARAMS = dict(
     n_topics=K,
     alpha=50/K,
     eta=0.5,
-    n_iter=2000
+    n_iter=1500
 )
 
 # other parameters
@@ -42,12 +42,6 @@ LDA_MODEL_PICKLE = 'data/final_model.pickle'
 LDA_MODEL_LL_PLOT = 'data/final_model_logliks.png'
 LDA_MODEL_EXCEL_OUTPUT = 'data/final_model_results.xlsx'
 
-# enable logging
-
-logging.basicConfig(level=logging.INFO)
-tmtoolkit_log = logging.getLogger('tmtoolkit')
-tmtoolkit_log.setLevel(logging.INFO)
-tmtoolkit_log.propagate = True
 
 print('loading DTM...')
 doc_labels, vocab, dtm = unpickle_file(DATA_PICKLE_DTM)
