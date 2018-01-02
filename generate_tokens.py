@@ -70,7 +70,7 @@ def remove_salutations(text):
         assert text
     return text
 
-speeches['text'] = speeches.text.apply(remove_salutations)
+speeches_df['text'] = speeches_df.text.apply(remove_salutations)
 
 corpus = {}
 for speech_id, speech in speeches_df.iterrows():
