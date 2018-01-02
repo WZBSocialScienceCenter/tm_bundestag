@@ -38,9 +38,9 @@ BURNIN = 5   # with a default of refresh=10 this means 50 burnin iterations
 # paths to data files
 
 DATA_PICKLE_DTM = 'data/speeches_tokens.pickle'
-LDA_MODEL_PICKLE = 'data/final_model.pickle'
-LDA_MODEL_LL_PLOT = 'data/final_model_logliks.png'
-LDA_MODEL_EXCEL_OUTPUT = 'data/final_model_results.xlsx'
+LDA_MODEL_PICKLE = 'data/model1.pickle'
+LDA_MODEL_LL_PLOT = 'data/model1_logliks.png'
+LDA_MODEL_EXCEL_OUTPUT = 'data/model1_results.xlsx'
 
 
 print('loading DTM...')

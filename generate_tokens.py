@@ -10,7 +10,7 @@ from tmtoolkit.utils import pickle_data
 
 
 SPEECHES_PICKLE_PATH = 'data/speeches_merged.pickle'
-DATA_PICKLE_DTM = 'data/speeches_tokens.pickle'
+DATA_PICKLE_DTM = 'data/speeches_tokens_nosalut.pickle'
 
 CUSTOM_STOPWORDS = [    # those will be removed
     u'dass',
@@ -54,6 +54,23 @@ tmtoolkit_log.propagate = True
 print('loading speeches from `%s`' % SPEECHES_PICKLE_PATH)
 speeches_df = pd.read_pickle(SPEECHES_PICKLE_PATH)
 print('loaded %d speeches' % len(speeches_df))
+
+# remove salutatory address
+# "Herr Präsident! Sehr geehrte Kolleginnen und Kollegen! Meine Damen und Herren! Ich will zum Schluss ..."
+# -> "Ich will zum Schluss ..."
+
+
+print('removing salutations...')
+
+pttrn_salutation = re.compile(r'^.+!\s+')
+def remove_salutations(text):
+    m = pttrn_salutation.match(text)
+    if m:
+        text = text[m.end(0):]
+        assert text
+    return text
+
+speeches['text'] = speeches.text.apply(remove_salutations)
 
 corpus = {}
 for speech_id, speech in speeches_df.iterrows():
