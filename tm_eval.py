@@ -13,7 +13,7 @@ from tmtoolkit.lda_utils.common import results_by_parameter
 from tmtoolkit.lda_utils.visualize import plot_eval_results
 
 
-DATA_PICKLE_DTM = 'data/speeches_tokens.pickle'
+DATA_PICKLE_DTM = 'data/speeches_tokens_nosalut.pickle'
 
 logging.basicConfig(level=logging.INFO)
 tmtoolkit_log = logging.getLogger('tmtoolkit')
@@ -35,8 +35,8 @@ constant_params = dict(n_iter=n_iter,
                        eta=eta)
 print('constant parameters:')
 pprint(constant_params)
-varying_num_topics = [5, 10] + list(range(20, 100, 10)) + list(range(100, 200, 20)) + list(range(200, 501, 50))
-#varying_num_topics = [120]
+varying_num_topics = list(range(20, 100, 10)) + list(range(100, 200, 20)) + list(range(200, 501, 50))
+#varying_num_topics = list(range(5,11))
 varying_alpha = [alpha_mod/k for k in varying_num_topics]
 varying_params = [dict(n_topics=k, alpha=a) for k, a in zip(varying_num_topics, varying_alpha)]
 print('varying parameters:')
@@ -44,16 +44,19 @@ pprint(varying_params)
 
 eval_results = tm_lda.evaluate_topic_models(dtm, varying_params, constant_params)
 
-pickle_file_eval_res = 'data/tm_eval_results_eta_%f.pickle' % eta
+pickle_file_eval_res = 'data/tm_eval_results2_eta_%f.pickle' % eta
 print('saving results to file `%s`' % pickle_file_eval_res)
 pickle_data(eval_results, pickle_file_eval_res)
 
 eval_results_by_n_topics = results_by_parameter(eval_results, 'n_topics')
 
 fig, ax = plt.subplots()
-plot_eval_results(fig, ax, eval_results_by_n_topics)
-plot_file_eval_res = 'fig/tm_eval_results_eta_%f.png' % eta
+plot_eval_results(fig, ax, eval_results_by_n_topics,
+                  xaxislabel='num. topics k', yaxislabel='normalized metric result',
+                  title='Evaluation results for alpha=%d/k, beta=%.2f' % (alpha_mod, eta))
+plot_file_eval_res = 'fig/tm_eval_results2_eta_%f.png' % eta
 print('saving plot to file `%s`' % plot_file_eval_res)
+plt.tight_layout()
 plt.savefig(plot_file_eval_res)
 plt.show()
 

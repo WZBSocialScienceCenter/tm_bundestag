@@ -4,8 +4,8 @@ Topic Modeling for 18th German Bundestag debates. Model generation with best mod
 in tm_eval.py
 
 Best model parameters:
-- k = 80 topics
-- alpha = 50/k = 0.625
+- k = 75 topics
+- alpha = 50/k = 0.6667
 - eta = 0.5
 - 1500 iterations
 """
@@ -24,7 +24,7 @@ from tmtoolkit.utils import unpickle_file, pickle_data
 
 # model hyperparameters
 
-K = 80
+K = 75
 LDA_PARAMS = dict(
     n_topics=K,
     alpha=50/K,
@@ -37,10 +37,10 @@ BURNIN = 5   # with a default of refresh=10 this means 50 burnin iterations
 
 # paths to data files
 
-DATA_PICKLE_DTM = 'data/speeches_tokens.pickle'
-LDA_MODEL_PICKLE = 'data/model1.pickle'
-LDA_MODEL_LL_PLOT = 'data/model1_logliks.png'
-LDA_MODEL_EXCEL_OUTPUT = 'data/model1_results.xlsx'
+DATA_PICKLE_DTM = 'data/speeches_tokens_nosalut.pickle'
+LDA_MODEL_PICKLE = 'data/model2.pickle'
+LDA_MODEL_LL_PLOT = 'data/model2_logliks.png'
+LDA_MODEL_EXCEL_OUTPUT = 'data/model2_results.xlsx'
 
 
 print('loading DTM...')
