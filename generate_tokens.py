@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import logging
 import re
 import string
@@ -9,8 +10,7 @@ from tmtoolkit.preprocess import TMPreproc
 from tmtoolkit.utils import pickle_data
 
 
-SPEECHES_PICKLE_PATH = 'data/speeches_merged.pickle'
-DATA_PICKLE_DTM = 'data/speeches_tokens_nosalut.pickle'
+DATA_PICKLE_DTM = 'data/speeches_tokens_%d.pickle'
 
 CUSTOM_STOPWORDS = [    # those will be removed
     u'dass',
@@ -46,40 +46,62 @@ CUSTOM_SPECIALCHARS = [   # those will be removed
     u'\ufffd',     # �
 ]
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 tmtoolkit_log = logging.getLogger('tmtoolkit')
-tmtoolkit_log.setLevel(logging.INFO)
+tmtoolkit_log.setLevel(logging.DEBUG)
 tmtoolkit_log.propagate = True
 
-print('loading speeches from `%s`' % SPEECHES_PICKLE_PATH)
-speeches_df = pd.read_pickle(SPEECHES_PICKLE_PATH)
+if len(sys.argv) == 2:
+    preproc_mode = int(sys.argv[1])
+else:
+    preproc_mode = None
+
+if preproc_mode is None or not 0 <= preproc_mode <= 2:
+    print('call script as: %s <preprocessing pipeline>' % sys.argv[0])
+    print('where preprocessing pipeline is:')
+    print('  0 -> use separate speech parts, default pipeline')
+    print('  1 -> use merged speeches, default pipeline')
+    print('  2 -> use merged speeches, remove salutatory addresses, default pipeline')
+    exit(1)
+
+print('preprocessing mode %d' % preproc_mode)
+
+if preproc_mode == 0:
+    speeches_pickle = 'data/speeches_separate.pickle'
+else:
+    speeches_pickle = 'data/speeches_merged.pickle'
+
+print('loading speeches from `%s`' % speeches_pickle)
+speeches_df = pd.read_pickle(speeches_pickle)
 print('loaded %d speeches' % len(speeches_df))
 
-# remove salutatory address
-# "Herr Präsident! Sehr geehrte Kolleginnen und Kollegen! Meine Damen und Herren! Ich will zum Schluss ..."
-# -> "Ich will zum Schluss ..."
+if preproc_mode == 2:
+    # remove salutatory address:
+    # "Herr Präsident! Sehr geehrte Kolleginnen und Kollegen! Meine Damen und Herren! Ich will zum Schluss ..."
+    # -> "Ich will zum Schluss ..."
 
+    print('removing salutations...')
 
-print('removing salutations...')
+    pttrn_salutation = re.compile(r'^.+!\s+')
+    def remove_salutations(text):
+        m = pttrn_salutation.match(text)
+        if m:
+            text = text[m.end(0):]
+            assert text
+        return text
 
-pttrn_salutation = re.compile(r'^.+!\s+')
-def remove_salutations(text):
-    m = pttrn_salutation.match(text)
-    if m:
-        text = text[m.end(0):]
-        assert text
-    return text
+    speeches_df['text'] = speeches_df.text.apply(remove_salutations)
 
-speeches_df['text'] = speeches_df.text.apply(remove_salutations)
-
+print('preparing corpus...')
 corpus = {}
 for speech_id, speech in speeches_df.iterrows():
-    doc_label = '%d_sess%d_top%d_spk%d_seq%d' % (speech_id, speech.sitzung, speech.top_id, speech.speaker_key, speech.sequence)
+    doc_label = '%d_sess%d_top%d_spk_%s_seq%d' % (speech_id, speech.sitzung, speech.top_id,
+                                                 speech.speaker_fp, speech.sequence)
     corpus[doc_label] = speech.text
 
 assert len(corpus) == len(speeches_df)
 
-print('preparing corpus...')
+print('starting preprocessing...')
 preproc = TMPreproc(corpus, language='german')
 preproc.add_stopwords(CUSTOM_STOPWORDS)
 preproc.add_special_chars(CUSTOM_SPECIALCHARS)
@@ -111,5 +133,8 @@ preproc.pos_tag()\
 print('generating DTM...')
 doc_labels, vocab, dtm = preproc.get_dtm()
 
-pickle_data((doc_labels, vocab, dtm), DATA_PICKLE_DTM)
+output_dtm_pickle = DATA_PICKLE_DTM % preproc_mode
+
+print('writing DTM to `%s`...' % output_dtm_pickle)
+pickle_data((doc_labels, vocab, dtm), output_dtm_pickle)
 print('done.')
