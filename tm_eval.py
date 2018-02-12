@@ -62,16 +62,5 @@ pickle_file_eval_res = 'data/tm_eval_results_tok%d_eta_%.2f_alphamod_%.2f.pickle
 print('saving results to file `%s`' % pickle_file_eval_res)
 pickle_data(eval_results, pickle_file_eval_res)
 
-eval_results_by_n_topics = results_by_parameter(eval_results, 'n_topics')
-
-fig, ax = plt.subplots()
-plot_eval_results(fig, ax, eval_results_by_n_topics,
-                  xaxislabel='num. topics k', yaxislabel='normalized metric result',
-                  title='Evaluation results for alpha=%.2f/k, beta=%.2f' % (alpha_mod, eta))
-plot_file_eval_res = 'fig/tm_eval_results_tok%d_eta_%.2f_alphamod_%.2f.png' % (preproc_mode, eta, alpha_mod)
-print('saving plot to file `%s`' % plot_file_eval_res)
-plt.tight_layout()
-plt.savefig(plot_file_eval_res)
-plt.show()
-
 print('done.')
+
