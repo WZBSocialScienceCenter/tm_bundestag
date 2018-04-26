@@ -130,11 +130,14 @@ preproc.pos_tag()\
        .remove_common_tokens(0.9)\
        .remove_uncommon_tokens(3, absolute=True)
 
+print('retrieving tokens...')
+tokens = preproc.tokens
+
 print('generating DTM...')
 doc_labels, vocab, dtm = preproc.get_dtm()
 
 output_dtm_pickle = DATA_PICKLE_DTM % preproc_mode
 
 print('writing DTM to `%s`...' % output_dtm_pickle)
-pickle_data((doc_labels, vocab, dtm), output_dtm_pickle)
+pickle_data((doc_labels, vocab, dtm, tokens), output_dtm_pickle)
 print('done.')

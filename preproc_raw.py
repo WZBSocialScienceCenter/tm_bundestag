@@ -41,6 +41,8 @@ for fname in sorted(os.listdir(RAW_DATA_PATH)):
         # filter variables: use only columns defined in SESS_COLUMNS
         sess_df = sess_df.loc[(sess_df.type == 'speech') & (~sess_df.text.isnull() & (sess_df.sitzung != 191)),
                               SESS_COLUMNS]
+        # sess_df = sess_df.loc[(~sess_df.text.isnull() & (sess_df.sitzung != 191)), SESS_COLUMNS]
+
 
         parl_speeches_parts.append(sess_df)
 
@@ -61,6 +63,9 @@ assert sum(parl_speeches_df.speaker_key.isnull()) == 0
 assert sum(parl_speeches_df.speaker_fp.isnull()) == 0
 
 print('loaded %d speech records' % len(parl_speeches_df))
+
+print('top_id missings: %d' % sum(parl_speeches_df.top_id == -1))
+print('speaker_key missings: %d' % sum(parl_speeches_df.speaker_key == -1))
 
 speech_lengths = parl_speeches_df.text.str.len()
 

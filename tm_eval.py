@@ -5,16 +5,11 @@ import logging
 import sys
 from pprint import pprint
 
-import matplotlib.pyplot as plt
-
 from tmtoolkit.utils import unpickle_file, pickle_data
-from tmtoolkit.lda_utils import tm_lda
-from tmtoolkit.lda_utils.common import results_by_parameter
-from tmtoolkit.lda_utils.visualize import plot_eval_results
+from tmtoolkit.topicmod import tm_lda
 
 
 DATA_PICKLE_DTM = 'data/speeches_tokens_%d.pickle'
-
 
 logging.basicConfig(level=logging.INFO)
 tmtoolkit_log = logging.getLogger('tmtoolkit')
@@ -38,9 +33,12 @@ assert n_iter > 0
 
 dtm_pickle = DATA_PICKLE_DTM % preproc_mode
 print('loading DTM from file `%s`...' % dtm_pickle)
-doc_labels, vocab, dtm = unpickle_file(dtm_pickle)
+doc_labels, vocab, dtm, doc_tokens = unpickle_file(dtm_pickle)
 assert len(doc_labels) == dtm.shape[0]
 assert len(vocab) == dtm.shape[1]
+tokens = list(doc_tokens.values())
+del doc_tokens
+assert len(tokens) == len(doc_labels)
 print('loaded DTM with %d documents, %d vocab size, %d tokens' % (len(doc_labels), len(vocab), dtm.sum()))
 
 print('evaluating topic models...')
@@ -56,7 +54,11 @@ varying_params = [dict(n_topics=k, alpha=a) for k, a in zip(varying_num_topics, 
 print('varying parameters:')
 pprint(varying_params)
 
-eval_results = tm_lda.evaluate_topic_models(dtm, varying_params, constant_params)
+eval_results = tm_lda.evaluate_topic_models(dtm, varying_params, constant_params,
+                                            metric=('griffiths_2004', 'cao_juan_2009', 'arun_2010',
+                                                    'coherence_mimno_2011', 'coherence_gensim_c_v'),
+                                            coherence_gensim_vocab=vocab,
+                                            coherence_gensim_texts=tokens)
 
 pickle_file_eval_res = 'data/tm_eval_results_tok%d_eta_%.2f_alphamod_%.2f.pickle' % (preproc_mode, eta, alpha_mod)
 print('saving results to file `%s`' % pickle_file_eval_res)
