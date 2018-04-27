@@ -30,7 +30,7 @@ n_metrics = len(eval_results_by_n_topics[0][1])
 
 fig, axes = plot_eval_results(eval_results_by_n_topics,
                               title='Evaluation results for alpha=%.2f/k, beta=%.2f' % (alpha_mod, eta),
-                              xaxislabel='num. topics (k)', figsize=(8, 2*n_metrics))
+                              xaxislabel='num. topics (k)')
 
 # alpha_mod_int = int(alpha_mod)
 # if alpha_mod_int > 10:
