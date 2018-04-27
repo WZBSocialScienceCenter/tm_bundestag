@@ -11,6 +11,7 @@ from tmtoolkit.utils import pickle_data
 
 
 DATA_PICKLE_DTM = 'data/speeches_tokens_%d.pickle'
+DATA_PICKLE_TOKENS = 'data/speeches_tokensordered_%d.pickle'
 
 CUSTOM_STOPWORDS = [    # those will be removed
     u'dass',
@@ -92,6 +93,32 @@ if preproc_mode == 2:
 
     speeches_df['text'] = speeches_df.text.apply(remove_salutations)
 
+    CUSTOM_STOPWORDS += [u'sagen', u'geben', u'm\xfcssen', u'stehen', u'sehen', u'gehen', u'nat\xfcrlich', u'ganz',
+                         u'lassen', u'h\xf6ren', u'gerade', u'daran', u'eben', u'denen', u'immer', u'deshalb',
+                         u'finden', u'tun', u'geben', u'genau', u'sollen', u'deutlich', u'kommen', u'n\xe4mlich',
+                         u'sprechen', u'legen', u'halten', u'bringen', u'f\xfchren', u'darauf', u'darum', u'dar\xfcber',
+                         u'gro\xdf', u'diskutieren', u'denken', u'davon', u'vielmehr', u'letzter', u'insbesondere',
+                         u'glauben', u'vielleicht', u'bleiben', u'gar', u'genug', u'erst', u'schauen', u'\xfcbrig',
+                         u'zeigen', u'teil', u'teilweise', u'sicht', u'einfach', u'fallen',
+                         u'entscheidend', u'stellen', u'wesentlich', u'd\xfcrfen',
+                         u'weder', u'kaum', u'reden', u'sicherlich', u'liegen', u'angehen',
+                         u'wort', u'wissen', u'bisher', u'bestehen', u'trotzdem', u'klar',
+                         u'wichtig', u'sogar', u'deswegen', u'l\xe4sst',
+                         u'kennen', u'genauso', u'sowohl', u'ausdr\xfccklich', u'zumindest',
+                         u'wirklich', u'kurz', u'brauchen', u'\xfcberhaupt',
+                         u'unserer', u'nehmen', u'setzen', u'm\xf6glich',
+                         u'gesamt', u'wenig', u'jedenfalls', u'viel',
+                         u'ansprechen', u'besonders', u'nennen',
+                         u'erster', u'au\xdferdem', u'versuchen',
+                         u'allein', u'angesichts', u'hoffen', u'viele', u'fast',
+                         u'vorstellen', u'aufgrund', u'eigentlich', u'hinaus',
+                         u'gleichzeitig', u'laufen', u'wenige', u'notwendig',
+                         u'nachdenken', u'vieles', u'lange', u'deren', u'statt',
+                         u'daneben', u'beispielsweise',
+                         u'ebenfalls', u'vielen', u'ganze', u'au\xdfer', u'zur\xfcck', u'ziemlich',
+                         u'weiterhin', u'm\xf6chten', u'dagegen', u'beispiel', u'\xfcbrigens', u'einzig', u'beim',
+                         u'darin', u'innerhalb', u'daraus', u'dadurch', u'allerdings']
+
 print('preparing corpus...')
 corpus = {}
 for speech_id, speech in speeches_df.iterrows():
@@ -132,6 +159,11 @@ preproc.pos_tag()\
 
 print('retrieving tokens...')
 tokens = preproc.tokens
+
+output_tokens_pickle = DATA_PICKLE_TOKENS % preproc_mode
+
+print('writing tokens to `%s`...' % output_tokens_pickle)
+pickle_data(tokens, output_tokens_pickle)
 
 print('generating DTM...')
 doc_labels, vocab, dtm = preproc.get_dtm()
