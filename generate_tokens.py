@@ -11,7 +11,6 @@ from tmtoolkit.utils import pickle_data
 
 
 DATA_PICKLE_DTM = 'data/speeches_tokens_%d.pickle'
-DATA_PICKLE_TOKENS = 'data/speeches_tokensordered_%d.pickle'
 
 CUSTOM_STOPWORDS = [    # those will be removed
     u'dass',
@@ -159,11 +158,6 @@ preproc.pos_tag()\
 
 print('retrieving tokens...')
 tokens = preproc.tokens
-
-output_tokens_pickle = DATA_PICKLE_TOKENS % preproc_mode
-
-print('writing tokens to `%s`...' % output_tokens_pickle)
-pickle_data(tokens, output_tokens_pickle)
 
 print('generating DTM...')
 doc_labels, vocab, dtm = preproc.get_dtm()

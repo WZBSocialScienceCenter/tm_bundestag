@@ -19,10 +19,12 @@ from tmtoolkit.utils import unpickle_file, pickle_data
 
 if len(sys.argv) != 2:
     print('run script as: %s  <tokens preprocessing pipeline>' % sys.argv[0])
-    print('<tokens preprocessing pipeline> must be 0, 1 or 2')
+    print('<tokens preprocessing pipeline> must be 1 or 2')
     exit(1)
 
 toks = int(sys.argv[1])
+
+assert toks in (1, 2)
 
 #%% model hyperparameters
 
@@ -31,10 +33,13 @@ if toks == 1:
     K = 130
     alpha_mod = 10.0
     beta = 0.1
-else:    # TODO
-    K = None
-    alpha_mod = None
-    beta = None
+elif toks == 2:
+    K = 130
+    alpha_mod = 10.0
+    beta = 0.1
+else:
+    print('<tokens preprocessing pipeline> must be 1 or 2')
+    exit(2)
 
 LDA_PARAMS = dict(
     n_topics=K,
@@ -57,7 +62,7 @@ LDA_MODEL_EXCEL_OUTPUT = 'data/model%d_results.xlsx' % toks
 print('input tokens from preprocessing pipeline %d' % toks)
 
 print('loading DTM from `%s`...' % DATA_PICKLE_DTM)
-doc_labels, vocab, dtm = unpickle_file(DATA_PICKLE_DTM)
+doc_labels, vocab, dtm, tokens = unpickle_file(DATA_PICKLE_DTM)
 assert len(doc_labels) == dtm.shape[0]
 assert len(vocab) == dtm.shape[1]
 print('loaded DTM with %d documents, %d vocab size, %d tokens' % (len(doc_labels), len(vocab), dtm.sum()))
