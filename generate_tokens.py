@@ -122,7 +122,7 @@ print('preparing corpus...')
 corpus = {}
 for speech_id, speech in speeches_df.iterrows():
     doc_label = '%d_sess%d_top%d_spk_%s_seq%d' % (speech_id, speech.sitzung, speech.top_id,
-                                                 speech.speaker_fp, speech.sequence)
+                                                  speech.speaker_fp, speech.sequence)
     corpus[doc_label] = speech.text
 
 assert len(corpus) == len(speeches_df)

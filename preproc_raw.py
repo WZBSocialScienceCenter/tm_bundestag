@@ -96,6 +96,7 @@ def typed_series(name, val, dtype=None):
 
 
 speeches_groups = []
+# grouping with speaker_fp instead of speaker ID because of many missings in speaker ID
 parl_speeches_grouped = parl_speeches_df.groupby(('sitzung', 'speaker_fp', 'top_id'), sort=False)
 for seq, (gname, gspeech) in enumerate(parl_speeches_grouped):
     sitzung, speaker_fp, top_id = gname
@@ -110,6 +111,7 @@ for seq, (gname, gspeech) in enumerate(parl_speeches_grouped):
 #        typed_series('speaker_cleaned', only_value_from_series(gspeech.speaker_cleaned), str),
 #        typed_series('speaker_fp', only_value_from_series(gspeech.speaker_fp), str),
         typed_series('speaker_fp', speaker_fp),
+        typed_series('speaker_key', only_value_from_series(gspeech.speaker_key)),
 #        typed_series('speaker_party', only_value_from_series(gspeech.speaker_party), str),
         typed_series('text', pars),
         typed_series('top_id', top_id, int),
