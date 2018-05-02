@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from tmtoolkit.utils import unpickle_file
 from tmtoolkit.topicmod.model_stats import get_most_relevant_words_for_topic, get_topic_word_relevance, \
-    get_doc_lengths, exclude_topics
+    get_doc_lengths, get_marginal_topic_distrib, exclude_topics
 
 
 pd.set_option('display.width', 180)
@@ -119,8 +119,10 @@ print('no MDB data found for %d speeches from %d overall speeches' % (n_no_mdb_d
 doc_meta = pd.merge(doc_meta, sess_dates, how='left', on='sess_id')
 assert sum(doc_meta.date.isna()) == 0
 
-#%% calculate average topic proportion per party
+#%% calculate marginal topic distribution per party
 
+# marginal topic distribution also takes the documents' lengths into account
+# -> longer speeches' topics get more "weight"
 doc_lengths = get_doc_lengths(dtm)
 
 stats_per_party = {}
@@ -128,20 +130,20 @@ for party, grp in doc_meta.groupby('party'):
     party_speeches_ind = np.where(np.isin(doc_labels, grp.doc_label))[0]
 
     party_doc_topic = theta[party_speeches_ind, :]
-    avg_party_theta = np.sum(party_doc_topic, axis=0) / len(party_doc_topic)
-    assert np.isclose(avg_party_theta.sum(), 1)
+    party_doc_lengths = doc_lengths[party_speeches_ind]
+    party_marginal_topic = get_marginal_topic_distrib(party_doc_topic, party_doc_lengths)
 
-    stats_per_party[party] = (avg_party_theta, len(grp))
+    stats_per_party[party] = (party_marginal_topic, len(grp))
 
 
-#%% plot average topic proportion per party
+#%% plot marginal topic proportion per party
 
 n_parties = len(stats_per_party)
 n_top_topics = 5
 n_top_words = 8
 fig, axes = plt.subplots(n_parties, 1, sharex=True, figsize=(8, 2 * n_parties), constrained_layout=True)
 
-fig.suptitle(u'Top %d average topic proportions per party' % n_top_topics, fontsize='large')
+fig.suptitle(u'Top %d marginal topic proportions per party' % n_top_topics, fontsize='large')
 fig.subplots_adjust(top=0.925)
 
 topic_word_rel_mat = get_topic_word_relevance(phi, theta, doc_lengths, lambda_=0.6)
@@ -161,12 +163,13 @@ for i, (party, ax) in enumerate(zip(sorted(stats_per_party.keys()), axes)):
         ax.text(0.002, y-0.15, ', '.join(most_rel_words), fontsize='xx-small')
 
     if i == n_parties-1:
-        ax.set_xlabel(u'average proportion')
+        ax.set_xlabel(u'proportion')
 
 plt.savefig('fig/top_topics_per_party.png')
 plt.show()
 
-#%%
+#%% marginal topic proportions over time
+
 doc_meta['date_year'] = doc_meta.date.dt.year
 doc_meta['date_month'] = doc_meta.date.dt.month
 
@@ -174,44 +177,36 @@ stats_per_sess = []
 for (year, month), grp in doc_meta.sort_values(['sess_id', 'date']).groupby(['date_year', 'date_month']):
     sess_speeches_ind = np.where(np.isin(doc_labels, grp.doc_label))[0]
 
-    # date = grp.date.unique()
-    # assert len(date) == 1
-    # date = date[0]
-
     sess_doc_topic = theta[sess_speeches_ind, :]
-    avg_sess_theta = np.sum(sess_doc_topic, axis=0) / len(sess_doc_topic)
-    assert np.isclose(avg_sess_theta.sum(), 1)
+    sess_doc_lengths = doc_lengths[sess_speeches_ind]
+    sess_marginal_topic = get_marginal_topic_distrib(sess_doc_topic, sess_doc_lengths)
 
-    stats_per_sess.append(('%d-%s' % (year, str(month).zfill(2)), avg_sess_theta, len(grp)))
+    stats_per_sess.append(('%d-%s' % (year, str(month).zfill(2)), sess_marginal_topic, len(grp)))
 
 assert sum([row[2] for row in stats_per_sess]) == n_docs
 
-#%%
-
-# problematic: does not take length of speach into account
+#%% plot marginal topic proportions for selected topics over time
 
 fig, ax = plt.subplots()
 
-plot_topic_ind = np.array([23, 81, 97]) - 1
-#plot_topic_ind = np.array([74, 75]) - 1
-#plot_topic_ind = [115]
+plot_topic_ind = np.array([23, 81, 97]) - 1  # select some topics
 
 dates = np.array([row[0] for row in stats_per_sess])
 
 for t in plot_topic_ind:
-    #print(t, [row[1][t] for row in stats_per_sess])
     most_rel_words = get_most_relevant_words_for_topic(vocab, topic_word_rel_mat, t, 5)
     ax.plot(dates, [row[1][t] for row in stats_per_sess],
            label=u'topic %d – %s' % ((t+1), ', '.join(most_rel_words)))
 
 ax.set_xticklabels([d if i % 2 == 0 else '' for i, d in enumerate(dates)])
 ax.tick_params(axis='both', which='major', labelsize='x-small')
-ax.set_ylabel('average topic proportion per month', fontsize='x-small')
+ax.set_ylabel(u'marginal topic proportion per month', fontsize='x-small')
 ax.legend(fontsize='x-small')
 
-ax.set_title(u'Some topics over time', fontsize='large')
+ax.set_title(u'Selected topics over time', fontsize='large')
 
 fig.autofmt_xdate()
 
+plt.savefig('fig/selected_topics_over_time.png')
 plt.show()
 
