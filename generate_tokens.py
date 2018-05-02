@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import logging
 import re
 import string
@@ -9,8 +10,7 @@ from tmtoolkit.preprocess import TMPreproc
 from tmtoolkit.utils import pickle_data
 
 
-SPEECHES_PICKLE_PATH = 'data/speeches_merged.pickle'
-DATA_PICKLE_DTM = 'data/speeches_tokens_nosalut.pickle'
+DATA_PICKLE_DTM = 'data/speeches_tokens_%d.pickle'
 
 CUSTOM_STOPWORDS = [    # those will be removed
     u'dass',
@@ -46,40 +46,88 @@ CUSTOM_SPECIALCHARS = [   # those will be removed
     u'\ufffd',     # �
 ]
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 tmtoolkit_log = logging.getLogger('tmtoolkit')
-tmtoolkit_log.setLevel(logging.INFO)
+tmtoolkit_log.setLevel(logging.DEBUG)
 tmtoolkit_log.propagate = True
 
-print('loading speeches from `%s`' % SPEECHES_PICKLE_PATH)
-speeches_df = pd.read_pickle(SPEECHES_PICKLE_PATH)
+if len(sys.argv) == 2:
+    preproc_mode = int(sys.argv[1])
+else:
+    preproc_mode = None
+
+if preproc_mode is None or not 0 <= preproc_mode <= 2:
+    print('call script as: %s <preprocessing pipeline>' % sys.argv[0])
+    print('where preprocessing pipeline is:')
+    print('  0 -> use separate speech parts, default pipeline')
+    print('  1 -> use merged speeches, default pipeline')
+    print('  2 -> use merged speeches, remove salutatory addresses, default pipeline')
+    exit(1)
+
+print('preprocessing mode %d' % preproc_mode)
+
+if preproc_mode == 0:
+    speeches_pickle = 'data/speeches_separate.pickle'
+else:
+    speeches_pickle = 'data/speeches_merged.pickle'
+
+print('loading speeches from `%s`' % speeches_pickle)
+speeches_df = pd.read_pickle(speeches_pickle)
 print('loaded %d speeches' % len(speeches_df))
 
-# remove salutatory address
-# "Herr Präsident! Sehr geehrte Kolleginnen und Kollegen! Meine Damen und Herren! Ich will zum Schluss ..."
-# -> "Ich will zum Schluss ..."
+if preproc_mode == 2:
+    # remove salutatory address:
+    # "Herr Präsident! Sehr geehrte Kolleginnen und Kollegen! Meine Damen und Herren! Ich will zum Schluss ..."
+    # -> "Ich will zum Schluss ..."
 
+    print('removing salutations...')
 
-print('removing salutations...')
+    pttrn_salutation = re.compile(r'^.+!\s+')
+    def remove_salutations(text):
+        m = pttrn_salutation.match(text)
+        if m:
+            text = text[m.end(0):]
+            assert text
+        return text
 
-pttrn_salutation = re.compile(r'^.+!\s+')
-def remove_salutations(text):
-    m = pttrn_salutation.match(text)
-    if m:
-        text = text[m.end(0):]
-        assert text
-    return text
+    speeches_df['text'] = speeches_df.text.apply(remove_salutations)
 
-speeches_df['text'] = speeches_df.text.apply(remove_salutations)
+    CUSTOM_STOPWORDS += [u'sagen', u'geben', u'm\xfcssen', u'stehen', u'sehen', u'gehen', u'nat\xfcrlich', u'ganz',
+                         u'lassen', u'h\xf6ren', u'gerade', u'daran', u'eben', u'denen', u'immer', u'deshalb',
+                         u'finden', u'tun', u'geben', u'genau', u'sollen', u'deutlich', u'kommen', u'n\xe4mlich',
+                         u'sprechen', u'legen', u'halten', u'bringen', u'f\xfchren', u'darauf', u'darum', u'dar\xfcber',
+                         u'gro\xdf', u'diskutieren', u'denken', u'davon', u'vielmehr', u'letzter', u'insbesondere',
+                         u'glauben', u'vielleicht', u'bleiben', u'gar', u'genug', u'erst', u'schauen', u'\xfcbrig',
+                         u'zeigen', u'teil', u'teilweise', u'sicht', u'einfach', u'fallen',
+                         u'entscheidend', u'stellen', u'wesentlich', u'd\xfcrfen',
+                         u'weder', u'kaum', u'reden', u'sicherlich', u'liegen', u'angehen',
+                         u'wort', u'wissen', u'bisher', u'bestehen', u'trotzdem', u'klar',
+                         u'wichtig', u'sogar', u'deswegen', u'l\xe4sst',
+                         u'kennen', u'genauso', u'sowohl', u'ausdr\xfccklich', u'zumindest',
+                         u'wirklich', u'kurz', u'brauchen', u'\xfcberhaupt',
+                         u'unserer', u'nehmen', u'setzen', u'm\xf6glich',
+                         u'gesamt', u'wenig', u'jedenfalls', u'viel',
+                         u'ansprechen', u'besonders', u'nennen',
+                         u'erster', u'au\xdferdem', u'versuchen',
+                         u'allein', u'angesichts', u'hoffen', u'viele', u'fast',
+                         u'vorstellen', u'aufgrund', u'eigentlich', u'hinaus',
+                         u'gleichzeitig', u'laufen', u'wenige', u'notwendig',
+                         u'nachdenken', u'vieles', u'lange', u'deren', u'statt',
+                         u'daneben', u'beispielsweise',
+                         u'ebenfalls', u'vielen', u'ganze', u'au\xdfer', u'zur\xfcck', u'ziemlich',
+                         u'weiterhin', u'm\xf6chten', u'dagegen', u'beispiel', u'\xfcbrigens', u'einzig', u'beim',
+                         u'darin', u'innerhalb', u'daraus', u'dadurch', u'allerdings']
 
+print('preparing corpus...')
 corpus = {}
 for speech_id, speech in speeches_df.iterrows():
-    doc_label = '%d_sess%d_top%d_spk%d_seq%d' % (speech_id, speech.sitzung, speech.top_id, speech.speaker_key, speech.sequence)
+    doc_label = '%d_sess%d_top%d_spk_%s_seq%d' % (speech_id, speech.sitzung, speech.top_id,
+                                                  speech.speaker_fp, speech.sequence)
     corpus[doc_label] = speech.text
 
 assert len(corpus) == len(speeches_df)
 
-print('preparing corpus...')
+print('starting preprocessing...')
 preproc = TMPreproc(corpus, language='german')
 preproc.add_stopwords(CUSTOM_STOPWORDS)
 preproc.add_special_chars(CUSTOM_SPECIALCHARS)
@@ -108,8 +156,14 @@ preproc.pos_tag()\
        .remove_common_tokens(0.9)\
        .remove_uncommon_tokens(3, absolute=True)
 
+print('retrieving tokens...')
+tokens = preproc.tokens
+
 print('generating DTM...')
 doc_labels, vocab, dtm = preproc.get_dtm()
 
-pickle_data((doc_labels, vocab, dtm), DATA_PICKLE_DTM)
+output_dtm_pickle = DATA_PICKLE_DTM % preproc_mode
+
+print('writing DTM to `%s`...' % output_dtm_pickle)
+pickle_data((doc_labels, vocab, dtm, tokens), output_dtm_pickle)
 print('done.')
