@@ -4,7 +4,9 @@ import re
 
 import numpy as np
 import pandas as pd
+
 import matplotlib.pyplot as plt
+
 from tmtoolkit.utils import unpickle_file
 from tmtoolkit.topicmod.model_stats import get_most_relevant_words_for_topic, get_topic_word_relevance, \
     get_doc_lengths, exclude_topics
@@ -30,6 +32,20 @@ print('loaded model with %d documents, vocab size %d, %d tokens and %d topics'
 # raw speeches
 speeches_merged = unpickle_file('data/speeches_merged.pickle')
 
+# TOPs data
+#tops = pd.read_csv('data/offenesparlament-tops.csv', usecols=['id', 'sitzung', 'week', 'year', 'held_on', 'sequence'])
+tops = pd.read_csv('data/offenesparlament-tops.csv', usecols=['sitzung', 'held_on'])
+assert sum(tops.sitzung.isna()) == 0
+assert sum(tops.held_on.isna()) == 0
+sess_dates = []
+for sess, grp in tops.groupby('sitzung'):
+    date = grp.held_on.unique()
+    assert len(date) == 1
+    sess_dates.append({'sess_id': sess, 'date': date[0]})
+
+sess_dates = pd.DataFrame(sess_dates)
+sess_dates['date'] = pd.to_datetime(sess_dates.date)
+
 # MDB data
 mdb = pd.read_csv('data/offenesparlament-mdb.csv', usecols=['id', 'first_name', 'last_name', 'party'])
 
@@ -46,7 +62,7 @@ assert sum(mdb['speaker_fp'].isna()) == 0
 
 #%% prepare model
 
-exclude_topic_indices = np.array([2, 19, 72, 9, 114, 18, 87, 30, 16, 6])
+exclude_topic_indices = np.array([3, 20, 73, 10, 115, 19, 88, 31, 17, 7, 96, 79, 27, 75, 113, 92]) - 1
 print('excluding %d topics: %s' % (len(exclude_topic_indices), exclude_topic_indices+1))
 theta, phi = exclude_topics(exclude_topic_indices, model.doc_topic_, model.topic_word_)
 
@@ -99,8 +115,13 @@ n_no_mdb_data = sum(doc_meta.party.isna())
 
 print('no MDB data found for %d speeches from %d overall speeches' % (n_no_mdb_data, len(doc_meta)))
 
+# join with sess_dates to get dates of sessions
+doc_meta = pd.merge(doc_meta, sess_dates, how='left', on='sess_id')
+assert sum(doc_meta.date.isna()) == 0
 
 #%% calculate average topic proportion per party
+
+doc_lengths = get_doc_lengths(dtm)
 
 stats_per_party = {}
 for party, grp in doc_meta.groupby('party'):
@@ -123,7 +144,7 @@ fig, axes = plt.subplots(n_parties, 1, sharex=True, figsize=(8, 2 * n_parties), 
 fig.suptitle(u'Top %d average topic proportions per party' % n_top_topics, fontsize='large')
 fig.subplots_adjust(top=0.925)
 
-topic_word_rel_mat = get_topic_word_relevance(phi, theta, get_doc_lengths(dtm), lambda_=0.6)
+topic_word_rel_mat = get_topic_word_relevance(phi, theta, doc_lengths, lambda_=0.6)
 
 for i, (party, ax) in enumerate(zip(sorted(stats_per_party.keys()), axes)):
     theta_party, n_speeches_party = stats_per_party[party]
@@ -144,3 +165,53 @@ for i, (party, ax) in enumerate(zip(sorted(stats_per_party.keys()), axes)):
 
 plt.savefig('fig/top_topics_per_party.png')
 plt.show()
+
+#%%
+doc_meta['date_year'] = doc_meta.date.dt.year
+doc_meta['date_month'] = doc_meta.date.dt.month
+
+stats_per_sess = []
+for (year, month), grp in doc_meta.sort_values(['sess_id', 'date']).groupby(['date_year', 'date_month']):
+    sess_speeches_ind = np.where(np.isin(doc_labels, grp.doc_label))[0]
+
+    # date = grp.date.unique()
+    # assert len(date) == 1
+    # date = date[0]
+
+    sess_doc_topic = theta[sess_speeches_ind, :]
+    avg_sess_theta = np.sum(sess_doc_topic, axis=0) / len(sess_doc_topic)
+    assert np.isclose(avg_sess_theta.sum(), 1)
+
+    stats_per_sess.append(('%d-%s' % (year, str(month).zfill(2)), avg_sess_theta, len(grp)))
+
+assert sum([row[2] for row in stats_per_sess]) == n_docs
+
+#%%
+
+# problematic: does not take length of speach into account
+
+fig, ax = plt.subplots()
+
+plot_topic_ind = np.array([23, 81, 97]) - 1
+#plot_topic_ind = np.array([74, 75]) - 1
+#plot_topic_ind = [115]
+
+dates = np.array([row[0] for row in stats_per_sess])
+
+for t in plot_topic_ind:
+    #print(t, [row[1][t] for row in stats_per_sess])
+    most_rel_words = get_most_relevant_words_for_topic(vocab, topic_word_rel_mat, t, 5)
+    ax.plot(dates, [row[1][t] for row in stats_per_sess],
+           label=u'topic %d – %s' % ((t+1), ', '.join(most_rel_words)))
+
+ax.set_xticklabels([d if i % 2 == 0 else '' for i, d in enumerate(dates)])
+ax.tick_params(axis='both', which='major', labelsize='x-small')
+ax.set_ylabel('average topic proportion per month', fontsize='x-small')
+ax.legend(fontsize='x-small')
+
+ax.set_title(u'Some topics over time', fontsize='large')
+
+fig.autofmt_xdate()
+
+plt.show()
+
