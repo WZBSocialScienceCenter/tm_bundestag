@@ -141,9 +141,10 @@ for party, grp in doc_meta.groupby('party'):
 n_parties = len(stats_per_party)
 n_top_topics = 5
 n_top_words = 8
-fig, axes = plt.subplots(n_parties, 1, sharex=True, figsize=(8, 2 * n_parties), constrained_layout=True)
+fig, axes = plt.subplots(3, 2, sharex=True, figsize=(12, 8), constrained_layout=True)
+axes = axes.flatten()
 
-fig.suptitle(u'Top %d marginal topic proportions per party' % n_top_topics, fontsize='large')
+fig.suptitle(u'Top %d marginal topic proportions per party' % n_top_topics, fontsize='medium')
 fig.subplots_adjust(top=0.925)
 
 topic_word_rel_mat = get_topic_word_relevance(phi, theta, doc_lengths, lambda_=0.6)
@@ -156,16 +157,20 @@ for i, (party, ax) in enumerate(zip(sorted(stats_per_party.keys()), axes)):
     ax.barh(ypos, theta_party[top_topics_ind], color='lightgray')
     ax.set_yticks(ypos)
     ax.set_yticklabels([u'topic %d' % (t+1) for t in top_topics_ind])
-    ax.set_title(u'%s (N=%d)' % (party.decode('utf-8'), n_speeches_party), fontsize='medium')
+    ax.set_title(u'%s (N=%d)' % (party.decode('utf-8'), n_speeches_party), fontsize='small')
+    ax.tick_params(axis='both', which='major', labelsize='x-small')
 
     for y, t in zip(ypos, top_topics_ind):
         most_rel_words = get_most_relevant_words_for_topic(vocab, topic_word_rel_mat, t, n_top_words)
-        ax.text(0.002, y-0.15, ', '.join(most_rel_words), fontsize='xx-small')
+        most_rel_words_str = u', '.join(most_rel_words)
+        if len(most_rel_words_str) > 90:
+            most_rel_words_str = most_rel_words_str[:90] + u' ...'
+        ax.text(0.002, y-0.15, most_rel_words_str, fontsize='xx-small')
 
-    if i == n_parties-1:
-        ax.set_xlabel(u'proportion')
+    if i > 3:
+        ax.set_xlabel(u'proportion', fontsize='x-small')
 
-plt.savefig('fig/top_topics_per_party.png')
+plt.savefig('fig/top_topics_per_party.png', dpi=120)
 plt.show()
 
 #%% marginal topic proportions over time
@@ -207,6 +212,6 @@ ax.set_title(u'Selected topics over time', fontsize='large')
 
 fig.autofmt_xdate()
 
-plt.savefig('fig/selected_topics_over_time.png')
+plt.savefig('fig/selected_topics_over_time.png', dpi=120)
 plt.show()
 
