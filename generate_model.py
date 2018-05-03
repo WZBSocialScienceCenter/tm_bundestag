@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 Topic Modeling for 18th German Bundestag debates. Model generation with best model parameters found by model selection
-in tm_eval.py
+in tm_eval.py.
+
+As parameter, pass which data should be loaded, i.e. with which preprocessing pipeline it was generated:
+
+  1 -> use merged speeches, default pipeline
+  2 -> use merged speeches, remove salutatory addresses, default pipeline
+
+
+Markus Konrad <markus.konrad@wzb.eu>
 """
 
 from __future__ import division

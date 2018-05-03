@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Generate plots for the evaluation results. Use the same parameters as in `tm_eval.py`.
+
+Markus Konrad <markus.konrad@wzb.eu>
+"""
+
 import sys
 
 import matplotlib.pyplot as plt
@@ -31,11 +38,6 @@ n_metrics = len(eval_results_by_n_topics[0][1])
 fig, axes = plot_eval_results(eval_results_by_n_topics,
                               title='Evaluation results for alpha=%.2f/k, beta=%.2f' % (alpha_mod, eta),
                               xaxislabel='num. topics (k)')
-
-# alpha_mod_int = int(alpha_mod)
-# if alpha_mod_int > 10:
-#     for ax in axes.flatten():
-#         ax.plot([alpha_mod_int, alpha_mod_int], ax.get_ylim(), color='k', linestyle='--')
 
 plot_file_eval_res = 'fig/tm_eval_results_tok%d_eta_%.2f_alphamod_%.2f.png' % (toks, eta, alpha_mod)
 print('saving plot to file `%s`' % plot_file_eval_res)

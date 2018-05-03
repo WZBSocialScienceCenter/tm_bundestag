@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Run the text preprocessing pipeline: Use speeches data as input and tokenize, POS tag, lemmatize, etc. until finally
+generating the document-term-matrix as output.
+
+As parameter, pass the preprocessing pipeline to be used (demonstrates the impact of different preprocessing choices):
+
+  0 -> use separate speech parts, default pipeline
+  1 -> use merged speeches, default pipeline
+  2 -> use merged speeches, remove salutatory addresses, default pipeline
+
+
+Markus Konrad <markus.konrad@wzb.eu>
+"""
 
 import sys
 import logging

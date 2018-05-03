@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Prepare the raw data: Load the CSV files for each session and merge the speeches for each speaker.
+
+Markus Konrad <markus.konrad@wzb.eu>
+"""
 
 import os
 

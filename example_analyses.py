@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Some example analyses for the final model.
+
+Markus Konrad <markus.konrad@wzb.eu>
+"""
 
 import re
 

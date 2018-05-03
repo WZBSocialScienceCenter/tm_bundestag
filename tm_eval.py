@@ -1,4 +1,16 @@
 # -*- coding: utf-8 -*-
+"""
+Evaluation of topic models: Generate several models in parallel with different hyperparameters and use evaluation
+metrics to find the "best" combination of hyperparameters.
+
+As parameters, pass:
+  - which data to take (i.e. from which preprocessing pipeline)
+  - fixed value for eta (aka beta)
+  - a factor X for alpha: X/K where K is the number of topics
+  - the number of sampling iterations
+
+Markus Konrad <markus.konrad@wzb.eu>
+"""
 
 from __future__ import division
 import logging
