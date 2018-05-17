@@ -2,6 +2,8 @@
 
 Markus Konrad <markus.konrad@wzb.eu>, May 2018
 
+**Important note:** If you want to *git clone* this project, you need to install [git lfs](https://git-lfs.github.com/) first.
+
 ## Overview
 
 For a workshop on practical topic modeling, I created this topic model as a showcase example that demostrates the steps that are necessary to take in order to arrive at a usable, informative model:
